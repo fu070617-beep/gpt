@@ -1,0 +1,40 @@
+name: SELECT 单表查询实验（MySQL 5.7.18）
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'sql/SELECT单表查询.sql'
+      - '.github/workflows/select-lab.yml'
+
+jobs:
+  run-select-lab:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:5.7.18
+        env:
+          MYSQL_ROOT_PASSWORD: root123456
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot123456"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: 拉取仓库代码
+        uses: actions/checkout@v4
+
+      - name: 检查 MySQL 版本
+        run: mysql -h 127.0.0.1 -uroot -proot123456 -e "SELECT VERSION();"
+
+      - name: 执行 SELECT 单表查询实验脚本
+        run: mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot123456 < "sql/SELECT单表查询.sql"
+
+      - name: 验证实验结果
+        run: |
+          RESULT=$(mysql -N -h 127.0.0.1 -uroot -proot123456 -D db_select_lab -e "SELECT CONCAT(COUNT(*), ',', SUM(quantity)) FROM sales;")
+          echo "记录数,销售总数量: $RESULT"
+          test "$RESULT" = "10,59"
