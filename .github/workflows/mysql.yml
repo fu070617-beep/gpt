@@ -1,0 +1,72 @@
+name: MySQL 5.7.18 实验3自动运行
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/mysql.yml'
+
+jobs:
+  mysql-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:5.7.18
+        env:
+          MYSQL_ROOT_PASSWORD: root123456
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot123456"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: 检查 MySQL 版本
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+          mysql -h 127.0.0.1 -uroot -proot123456 -e "SELECT VERSION();"
+
+      - name: 创建实验数据库
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot123456 <<'SQL'
+          CREATE DATABASE db_shop
+          DEFAULT CHARACTER SET utf8mb4;
+          USE db_shop;
+
+          CREATE TABLE t_innodb (
+            id INT PRIMARY KEY,
+            name VARCHAR(50)
+          ) ENGINE=InnoDB;
+
+          CREATE TABLE t_myisam (
+            id INT PRIMARY KEY,
+            name VARCHAR(50)
+          ) ENGINE=MyISAM;
+
+          CREATE TABLE tb_demo (
+            id INT PRIMARY KEY,
+            age INT,
+            price DECIMAL(10,2),
+            name VARCHAR(50),
+            birthday DATE
+          ) ENGINE=InnoDB;
+
+          CREATE TABLE charset_test (
+            id INT PRIMARY KEY,
+            name VARCHAR(50)
+          ) DEFAULT CHARSET=utf8mb4;
+
+          INSERT INTO t_innodb VALUES (1,'InnoDB测试');
+          INSERT INTO t_myisam VALUES (1,'MyISAM测试');
+          INSERT INTO tb_demo VALUES
+          (1,20,99.50,'MySQL实验','2005-01-01');
+          INSERT INTO charset_test VALUES (1,'字符集测试');
+
+          SHOW TABLE STATUS;
+          SHOW CREATE TABLE charset_test;
+          SELECT * FROM t_innodb;
+          SELECT * FROM t
