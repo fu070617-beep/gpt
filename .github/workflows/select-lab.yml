@@ -28,13 +28,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 检查 MySQL 版本
-        run: mysql --skip-ssl -h 127.0.0.1 -uroot -proot123456 -e "SELECT VERSION();"
+        run: mysql --ssl-mode=DISABLED -h 127.0.0.1 -uroot -proot123456 -e "SELECT VERSION();"
 
       - name: 执行 SELECT 单表查询实验脚本
-        run: mysql --skip-ssl --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot123456 < "sql/SELECT单表查询.sql"
+        run: mysql --ssl-mode=DISABLED --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot123456 < "sql/SELECT单表查询.sql"
 
       - name: 验证实验结果
         run: |
-          RESULT=$(mysql --skip-ssl -N -h 127.0.0.1 -uroot -proot123456 -D db_select_lab -e "SELECT CONCAT(COUNT(*), ',', SUM(quantity)) FROM sales;")
+          RESULT=$(mysql --ssl-mode=DISABLED -N -h 127.0.0.1 -uroot -proot123456 -D db_select_lab -e "SELECT CONCAT(COUNT(*), ',', SUM(quantity)) FROM sales;")
           echo "记录数,销售总数量: $RESULT"
           test "$RESULT" = "10,59"
