@@ -35,6 +35,6 @@ jobs:
 
       - name: 验证实验结果
         run: |
-          RESULT=$(mysql -N -h 127.0.0.1 -uroot -proot123456 -D db_select_lab -e "SELECT CONCAT(COUNT(*), ',', SUM(quantity)) FROM sales;")
+          RESULT=$(mysql --skip-ssl -N -h 127.0.0.1 -uroot -proot123456 -D db_select_lab -e "SELECT CONCAT(COUNT(*), ',', SUM(quantity)) FROM sales;")
           echo "记录数,销售总数量: $RESULT"
           test "$RESULT" = "10,59"
