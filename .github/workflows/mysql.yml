@@ -26,15 +26,19 @@ jobs:
     steps:
       - name: 检查 MySQL 版本
         run: |
-          sudo apt-get update
-          sudo apt-get install -y mysql-client
-          mysql -h 127.0.0.1 -uroot -proot123456 -e "SELECT VERSION();"
+          CONTAINER=$(docker ps --format '{{.ID}} {{.Image}}' | awk '$2=="mysql:5.7.18"{print $1; exit}')
+          if [ -z "$CONTAINER" ]; then
+            echo "MySQL 容器未找到"
+            docker ps -a
+            exit 1
+          fi
+          docker exec "$CONTAINER" mysql -uroot -proot123456 -e "SELECT VERSION();"
 
       - name: 创建实验数据库
         run: |
-          mysql -h 127.0.0.1 -uroot -proot123456 <<'SQL'
-          CREATE DATABASE db_shop
-          DEFAULT CHARACTER SET utf8mb4;
+          CONTAINER=$(docker ps --format '{{.ID}} {{.Image}}' | awk '$2=="mysql:5.7.18"{print $1; exit}')
+          docker exec -i "$CONTAINER" mysql -uroot -proot123456 <<'SQL'
+          CREATE DATABASE db_shop DEFAULT CHARACTER SET utf8mb4;
           USE db_shop;
 
           CREATE TABLE t_innodb (
@@ -62,11 +66,13 @@ jobs:
 
           INSERT INTO t_innodb VALUES (1,'InnoDB测试');
           INSERT INTO t_myisam VALUES (1,'MyISAM测试');
-          INSERT INTO tb_demo VALUES
-          (1,20,99.50,'MySQL实验','2005-01-01');
+          INSERT INTO tb_demo VALUES (1,20,99.50,'MySQL实验','2005-01-01');
           INSERT INTO charset_test VALUES (1,'字符集测试');
 
           SHOW TABLE STATUS;
           SHOW CREATE TABLE charset_test;
           SELECT * FROM t_innodb;
-          SELECT * FROM t
+          SELECT * FROM t_myisam;
+          SELECT * FROM tb_demo;
+          SELECT * FROM charset_test;
+          SQL
